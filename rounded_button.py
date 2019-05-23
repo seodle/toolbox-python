@@ -27,24 +27,25 @@ def display_text(texte,positionx,positiony,police,taille,couleur):
 def display_rounded_button(surface,rect,color,radius=0.4):
 
     """
-    AAfilledRoundedRect(surface,rect,color,radius=0.4)
+    display_rounded_button(surface,rect,color,radius=0.4)
     surface : destination
     rect    : rectangle
     color   : rgb or rgba
     radius  : 0 <= radius <= 1
     """
 
-    rect         = Rect(rect)
-    color        = Color(*color)
-    alpha        = color.a
-    color.a      = 0
-    pos          = rect.topleft
-    rect.topleft = 0,0
-    rectangle    = Surface(rect.size,SRCALPHA)
+    original_rect = Rect(rect)
+    rect          = Rect(rect)
+    color         = Color(*color)
+    alpha         = color.a
+    color.a       = 0
+    pos           = rect.topleft
+    rect.topleft  = 0,0
+    rectangle     = Surface(rect.size,SRCALPHA)
 
-    circle       = Surface([min(rect.size)*3]*2,SRCALPHA)
+    circle        = Surface([min(rect.size)*3]*2,SRCALPHA)
     draw.ellipse(circle,(0,0,0),circle.get_rect(),0)
-    circle       = transform.smoothscale(circle,[int(min(rect.size)*radius)]*2)
+    circle        = transform.smoothscale(circle,[int(min(rect.size)*radius)]*2)
 
     radius              = rectangle.blit(circle,(0,0))
     radius.bottomright  = rect.bottomright
@@ -60,15 +61,45 @@ def display_rounded_button(surface,rect,color,radius=0.4):
     rectangle.fill(color,special_flags=BLEND_RGBA_MAX)
     rectangle.fill((255,255,255,alpha),special_flags=BLEND_RGBA_MIN)
 
-    return surface.blit(rectangle,pos)
+    surface.blit(rectangle,pos)
+
+    return original_rect
 
 pygame.init()
 pygame.font.init()
 
 screen = pygame.display.set_mode((300,300))
 screen.fill(-1)
-display_rounded_button(screen,(x,y,width,height),(200,20,20),0.5)
+rectangle = display_rounded_button(screen,(x,y,width,height),(200,20,20),0.5)
 display_text("Button",x+width/2,y+height/2,"HELVETICA",20,(255,255,255))
 pygame.display.flip()
-while event.wait().type != QUIT: pass
+
+running = True
+rectangle_draging = False
+
+while running:
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                if rectangle.collidepoint(event.pos):
+                    rectangle_draging = True
+                    print("collision")
+
+        if event.type == pygame.MOUSEMOTION:
+            if rectangle_draging:
+                mouse_x, mouse_y = event.pos
+                print(str(mouse_x)+", "+str(mouse_y))
+                screen.fill(-1)
+                rectangle = display_rounded_button(screen,(mouse_x-width/2, mouse_y-height/2, width, height),(200,20,20),0.5)
+                display_text("Button",mouse_x, mouse_y,"HELVETICA",20,(255,255,255))
+                pygame.display.flip()
+
+        if event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:            
+                rectangle_draging = False
+                print("fin")
 
